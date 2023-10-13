@@ -28,7 +28,7 @@ services:
     image: mariadb:latest
     container_name: db-ufc-api
     ports:
-      - "33061:3306"
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "rootpwd"
       MYSQL_DATABASE: "ufc-api"
