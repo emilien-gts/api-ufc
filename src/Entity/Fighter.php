@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Entity\Trait\UuidTrait;
+use App\Entity\Trait\IdTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity]
 class Fighter
 {
-    use UuidTrait;
+    use IdTrait;
 
     #[ORM\Column(type: Types::STRING, nullable: false)]
     #[Assert\Length(exactly: 16)]
