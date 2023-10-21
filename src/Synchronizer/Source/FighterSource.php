@@ -2,7 +2,7 @@
 
 namespace App\Synchronizer\Source;
 
-class FighterSource
+class FighterSource implements SynchronizerSource
 {
     public function getAElementsTokensSelector(): string
     {

@@ -2,11 +2,12 @@
 
 namespace App\Command;
 
-use App\Synchronizer\FighterSynchronizer;
+use App\Synchronizer\Contracts\SynchronizerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 
 #[AsCommand(
     name: 'app:sync',
@@ -16,14 +17,20 @@ class SynchronizeCommand extends Command
 {
     public static $defaultName = 'app:sync';
 
-    public function __construct(private readonly FighterSynchronizer $fighterSynchronizer)
-    {
+    /**
+     * @param SynchronizerInterface[] $synchronizers
+     */
+    public function __construct(
+        #[TaggedIterator('app.synchronizer')] private readonly iterable $synchronizers
+    ) {
         parent::__construct(self::$defaultName);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->fighterSynchronizer->sync();
+        foreach ($this->synchronizers as $synchronizer) {
+            $synchronizer->sync();
+        }
 
         return Command::SUCCESS;
     }

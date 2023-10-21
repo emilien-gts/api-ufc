@@ -19,7 +19,7 @@ class ApiFighterTransformer implements ApiTransformerInterface
         $target->weight = $source->getWeight();
         $target->reach = $source->getReach();
         $target->stance = $source->getStance()?->value;
-        $target->dateOfBirth = $source->getDateOfBirth()?->format('Y/m/d');
+        $target->dateOfBirth = $source->getDateOfBirth()?->format('Y-m-d');
 
         return $target;
     }

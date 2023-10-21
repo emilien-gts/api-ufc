@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Synchronizer\Model;
+namespace App\Synchronizer\Contracts;
 
 interface SynchronizerInterface
 {

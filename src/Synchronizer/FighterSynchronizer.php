@@ -7,29 +7,30 @@ use App\Enum\Stance;
 use App\Model\FeetAndInchesToCentimeters;
 use App\Model\LbsToKilograms;
 use App\Synchronizer\Base\BaseCrawler;
+use App\Synchronizer\Base\BaseSynchronizer;
 use App\Synchronizer\Exception\SynchronizerException;
 use App\Synchronizer\Helper\SynchronizerHelper;
-use App\Synchronizer\Model\SynchronizerInterface;
 use App\Synchronizer\Source\FighterSource;
 use App\Synchronizer\Utils\CrawlerUtils;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 
-class FighterSynchronizer implements SynchronizerInterface
+#[AsTaggedItem(priority: 10)]
+final class FighterSynchronizer extends BaseSynchronizer
 {
     public const LIST_URL = 'http://ufcstats.com/statistics/fighters';
     public const DETAILS_URL = 'http://ufcstats.com/fighter-details/';
 
-    private const BATCH_SIZE = 25;
-
     public function __construct(
-        private readonly LoggerInterface $logger,
-        private readonly EntityManagerInterface $em,
-        private readonly SynchronizerHelper $helper,
-        private readonly BaseCrawler $crawler,
+        LoggerInterface $logger,
+        EntityManagerInterface $em,
+        SynchronizerHelper $helper,
+        BaseCrawler $crawler,
         private readonly FighterSource $source
     ) {
+        parent::__construct($logger, $em, $helper, $crawler);
     }
 
     /**
@@ -44,9 +45,9 @@ class FighterSynchronizer implements SynchronizerInterface
         $tokens = $this->getTokens();
         $nbTokens = \count($tokens);
         foreach ($tokens as $key => $token) {
-            $this->createFighter($token);
+            $this->syncOne($token);
 
-            if (0 !== $key && 0 === $key % self::BATCH_SIZE) {
+            if (0 === $key % self::BATCH_SIZE) {
                 $this->logger->info(\sprintf('%s / %s fighters import', $key, $nbTokens));
                 $this->helper->flushAndClear();
             }
@@ -61,7 +62,7 @@ class FighterSynchronizer implements SynchronizerInterface
      *
      * @throws \Exception
      */
-    private function getTokens(): array
+    protected function getTokens(): array
     {
         $tokens = [];
         foreach (\range('a', 'z') as $letter) {
@@ -94,7 +95,7 @@ class FighterSynchronizer implements SynchronizerInterface
     /**
      * @throws SynchronizerException
      */
-    private function createFighter(string $token): void
+    private function syncOne(string $token): void
     {
         $url = \sprintf('%s/%s', FighterSynchronizer::DETAILS_URL, $token);
         $this->crawler->init($url);
@@ -115,36 +116,57 @@ class FighterSynchronizer implements SynchronizerInterface
 
     /**
      * @return array{
-     *     full_name: string
-     * }
+     *        full_name: string,
+     *        height: string|null,
+     *        weight: string|null,
+     *        reach: string|null,
+     *        stance: string|null,
+     *        dateOfBirth: string|null
+     *    }
      *
      * @throws SynchronizerException
      */
-    private function getDataFromDom(): array
+    protected function getDataFromDom(): array
     {
-        $fullNameDomElement = $this->crawler->getDomElement($this->source->getSpanFullnameSelector());
-        if (!isset($fullNameDomElement->textContent)) {
-            throw new SynchronizerException('Le nom du combattant n\'a pas été trouvé');
-        }
-
-        $heightDomElement = $this->crawler->getDomElement($this->source->getLiHeightSelector());
-        $weightDomElement = $this->crawler->getDomElement($this->source->getLiWeightSelector());
-        $reachDomElement = $this->crawler->getDomElement($this->source->getLiReachSelector());
-        $stanceDomElement = $this->crawler->getDomElement($this->source->getLiStanceSelector());
-        $dateOfBirthDomElement = $this->crawler->getDomElement($this->source->getLiDateOfBirthSelector());
-
         return [
-            'full_name' => \trim($fullNameDomElement->textContent),
-            'height' => $heightDomElement ? CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($heightDomElement->childNodes->getIterator()) : null,
-            'weight' => $weightDomElement ? CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($weightDomElement->childNodes->getIterator()) : null,
-            'reach' => $reachDomElement ? CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($reachDomElement->childNodes->getIterator()) : null,
-            'stance' => $stanceDomElement ? CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($stanceDomElement->childNodes->getIterator()) : null,
-            'dateOfBirth' => $dateOfBirthDomElement ? CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($dateOfBirthDomElement->childNodes->getIterator()) : null,
+            'full_name' => $this->getFullNameFromDom(),
+            'height' => $this->getTextContentFromLi($this->source->getLiHeightSelector()),
+            'weight' => $this->getTextContentFromLi($this->source->getLiWeightSelector()),
+            'reach' => $this->getTextContentFromLi($this->source->getLiReachSelector()),
+            'stance' => $this->getTextContentFromLi($this->source->getLiStanceSelector()),
+            'dateOfBirth' => $this->getTextContentFromLi($this->source->getLiDateOfBirthSelector()),
         ];
     }
 
+    private function getFullNameFromDom(): string
+    {
+        $domElement = $this->crawler->getDomElement($this->source->getSpanFullnameSelector());
+        if (!isset($domElement->textContent)) {
+            throw new SynchronizerException('Name of fighter not found.');
+        }
+
+        return \trim($domElement->textContent);
+    }
+
+    private function getTextContentFromLi(string $selector): ?string
+    {
+        $domElement = $this->crawler->getDomElement($selector);
+        if (null === $domElement) {
+            return null;
+        }
+
+        return CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($domElement->childNodes->getIterator());
+    }
+
     /**
-     * @param array<string, string> $domData
+     * @param array{
+     *       full_name: string,
+     *       height: string|null,
+     *       weight: string|null,
+     *       reach: string|null,
+     *       stance: string|null,
+     *       dateOfBirth: string|null
+     *   } $domData
      *
      * @return array{
      *      full_name: string,
@@ -155,9 +177,8 @@ class FighterSynchronizer implements SynchronizerInterface
      *      dateOfBirth: DateTimeImmutable|null
      *  }
      */
-    private function transformDomData(array $domData): array
+    protected function transformDomData(array $domData): array
     {
-        $data = ['height' => null, 'weight' => null, 'reach' => null, 'stance' => null, 'dateOfBirth' => null];
         $data['full_name'] = $domData['full_name'];
 
         if (isset($domData['height'])) {
@@ -174,14 +195,19 @@ class FighterSynchronizer implements SynchronizerInterface
         }
 
         if (isset($domData['stance'])) {
-            $data['stance'] = Stance::tryFrom((string) \strtolower($domData['stance']));
+            $data['stance'] = Stance::tryFrom(strtolower($domData['stance']));
         }
 
-        $dateOfBirthPattern = '/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},\s\d{4}$/';
-        if (isset($domData['dateOfBirth']) && 1 === preg_match($dateOfBirthPattern, $domData['dateOfBirth'])) {
-            $data['dateOfBirth'] = \DateTimeImmutable::createFromFormat('M d, Y', $domData['dateOfBirth']) ?: null;
+        if (isset($domData['dateOfBirth'])) {
+            $data['dateOfBirth'] = $this->helper->createDatetimeFromUfcFormat($domData['dateOfBirth']);
         }
 
-        return $data;
+        return \array_merge([
+            'height' => null,
+            'weight' => null,
+            'reach' => null,
+            'stance' => null,
+            'dateOfBirth' => null,
+        ], $data);
     }
 }

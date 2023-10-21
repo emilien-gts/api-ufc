@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Api\Transformer;
+namespace App\Api\Service;
 
 use App\Api\Exception\ApiException;
 use App\Api\Resource\ApiResourceInterface;
+use App\Api\Transformer\ApiTransformerInterface;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 
 class ApiTransformerService

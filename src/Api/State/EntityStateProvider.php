@@ -8,7 +8,6 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\Pagination\TraversablePaginator;
 use App\Api\Exception\ApiException;
 use App\Api\Resource\ApiResourceInterface;
-use App\Entity\Fighter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -36,13 +35,13 @@ class EntityStateProvider extends AbstractStateProvider
      *
      * @throws \Exception
      */
-    private function provideCollection(Operation $operation, array $uriVariables = [], array $context = []): TraversablePaginator
+    protected function provideCollection(Operation $operation, array $uriVariables = [], array $context = []): TraversablePaginator
     {
         $entities = $this->collectionProvider->provide($operation, $uriVariables, $context);
         \assert($entities instanceof Paginator);
 
         $dtos = [];
-        /** @var Fighter $entity */
+        /** @var object $entity */
         foreach ($entities as $entity) {
             $dto = $this->transformerService->transform($entity);
             $dtos[] = $dto;
@@ -63,14 +62,12 @@ class EntityStateProvider extends AbstractStateProvider
      * @throws ApiException
      * @throws \Exception
      */
-    private function provideItem(Operation $operation, array $uriVariables = [], array $context = []): ApiResourceInterface
+    protected function provideItem(Operation $operation, array $uriVariables = [], array $context = []): ApiResourceInterface
     {
         $entity = $this->itemProvider->provide($operation, $uriVariables, $context);
         if (null === $entity) {
             throw new ApiException('Entity not found', Response::HTTP_NOT_FOUND);
         }
-
-        \assert($entity instanceof Fighter);
 
         return $this->transformerService->transform($entity);
     }
