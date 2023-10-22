@@ -9,6 +9,12 @@ class CrawlerUtils
     public static function getTokenFromDomLink(Link $domLink): string
     {
         $uri = $domLink->getUri();
+
+        return self::getTokenFromUri($uri);
+    }
+
+    public static function getTokenFromUri(string $uri): string
+    {
         $segments = \explode('/', $uri);
 
         return \end($segments);

@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 trait TokenTrait
 {
-    #[ORM\Column(type: Types::STRING)]
+    #[ORM\Column(type: Types::STRING, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(exactly: 16)]
     private string $token;

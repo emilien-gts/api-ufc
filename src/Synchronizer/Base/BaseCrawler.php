@@ -46,4 +46,12 @@ class BaseCrawler
     {
         return $this->crawler->filter($selector)->getNode(0);
     }
+
+    /**
+     * @return \DOMNode[]
+     */
+    public function getElements(string $selector): iterable
+    {
+        return $this->crawler->filter($selector)->getIterator();
+    }
 }

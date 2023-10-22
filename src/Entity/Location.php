@@ -2,16 +2,14 @@
 
 namespace App\Entity;
 
+use App\Entity\Trait\IdTrait;
 use App\Repository\LocationRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LocationRepository::class)]
 class Location
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    use IdTrait;
 
     public function __construct(
         #[ORM\Column(length: 255)]

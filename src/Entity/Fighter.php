@@ -21,12 +21,15 @@ class Fighter
     private ?string $fullName = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Range(min: 1)]
     private ?int $height = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Range(min: 1)]
     private ?int $weight = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Assert\Range(min: 1)]
     private ?int $reach = null;
 
     #[ORM\Column(type: Types::STRING, length: 15, nullable: true, enumType: Stance::class)]

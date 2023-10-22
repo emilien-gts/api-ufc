@@ -2,7 +2,9 @@
 
 namespace App\Synchronizer\Base;
 
+use App\Synchronizer\Exception\SynchronizerException;
 use App\Synchronizer\Helper\SynchronizerHelper;
+use App\Synchronizer\Utils\CrawlerUtils;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -22,20 +24,18 @@ abstract class BaseSynchronizer
 
     abstract public function sync(): void;
 
-    /**
-     * @return array<string>
-     */
-    abstract protected function getTokens(): array;
+    public function getDataContentFromDom(string $selector): string
+    {
+        $domElement = $this->crawler->getDomElement($selector);
+        if (null === $domElement) {
+            throw new SynchronizerException(\sprintf('Data not found because of selector %s', $selector));
+        }
 
-    /**
-     * @return array<string>
-     */
-    abstract protected function getDataFromDom(): array;
+        $data = CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($domElement->childNodes->getIterator());
+        if (empty($data)) {
+            throw new SynchronizerException(\sprintf('Data not found (selector %s)', $selector));
+        }
 
-    /**
-     * @param array<string> $domData
-     *
-     * @return array<string, mixed>
-     */
-    abstract protected function transformDomData(array $domData): array;
+        return \trim($data);
+    }
 }

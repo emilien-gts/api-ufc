@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 final class EventSynchronizer extends BaseSynchronizer
 {
     public const LIST_URL = 'http://ufcstats.com/statistics/events/completed';
-    public const DETAILS_URL = 'http://ufcstats.com/event-details/';
+    public const DETAILS_URL = 'http://ufcstats.com/event-details';
 
     private const UFC_1_TOKEN = '6420efac0578988b'; // not in list
 
