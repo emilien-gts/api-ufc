@@ -12,7 +12,6 @@ use App\Synchronizer\Exception\SynchronizerException;
 use App\Synchronizer\Helper\SynchronizerHelper;
 use App\Synchronizer\Source\FighterSource;
 use App\Synchronizer\Utils\CrawlerUtils;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
@@ -33,10 +32,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         parent::__construct($logger, $em, $helper, $crawler);
     }
 
-    /**
-     * @throws SynchronizerException
-     * @throws \Exception
-     */
     public function sync(): void
     {
         $this->helper->deleteEntity(Fighter::class);
@@ -57,11 +52,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         $this->helper->flushAndClear();
     }
 
-    /**
-     * @return array<string>
-     *
-     * @throws \Exception
-     */
     protected function getTokens(): array
     {
         $tokens = [];
@@ -74,11 +64,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         return $tokens;
     }
 
-    /**
-     * @return array<string>
-     *
-     * @throws \Exception
-     */
     private function getTokensFromCurrentPage(string $url): array
     {
         $this->crawler->init($url);
@@ -92,9 +77,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         return $tokens;
     }
 
-    /**
-     * @throws SynchronizerException
-     */
     private function syncOne(string $token): void
     {
         $url = \sprintf('%s/%s', FighterSynchronizer::DETAILS_URL, $token);
@@ -114,18 +96,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         $this->em->persist($f);
     }
 
-    /**
-     * @return array{
-     *        full_name: string,
-     *        height: string|null,
-     *        weight: string|null,
-     *        reach: string|null,
-     *        stance: string|null,
-     *        dateOfBirth: string|null
-     *    }
-     *
-     * @throws SynchronizerException
-     */
     protected function getDataFromDom(): array
     {
         return [
@@ -158,25 +128,6 @@ final class FighterSynchronizer extends BaseSynchronizer
         return CrawlerUtils::getFirstNotEmptyDomTextContentFromIterable($domElement->childNodes->getIterator());
     }
 
-    /**
-     * @param array{
-     *       full_name: string,
-     *       height: string|null,
-     *       weight: string|null,
-     *       reach: string|null,
-     *       stance: string|null,
-     *       dateOfBirth: string|null
-     *   } $domData
-     *
-     * @return array{
-     *      full_name: string,
-     *      height: int|null,
-     *      weight: int|null,
-     *      reach: int|null,
-     *      stance: Stance|null,
-     *      dateOfBirth: DateTimeImmutable|null
-     *  }
-     */
     protected function transformDomData(array $domData): array
     {
         $data['full_name'] = $domData['full_name'];

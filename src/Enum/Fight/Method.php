@@ -33,7 +33,7 @@ enum Method: string implements Labelized
         };
     }
 
-    public static function tryFromUfcStats(string $value): ?Method
+    public static function tryFromUfcStats(string $value): Method
     {
         return match ($value) {
             'KO/TKO' => self::KO_TKO,

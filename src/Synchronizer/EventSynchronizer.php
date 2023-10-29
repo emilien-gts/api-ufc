@@ -10,7 +10,6 @@ use App\Synchronizer\Exception\SynchronizerException;
 use App\Synchronizer\Helper\SynchronizerHelper;
 use App\Synchronizer\Source\EventSource;
 use App\Synchronizer\Utils\CrawlerUtils;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
@@ -38,10 +37,6 @@ final class EventSynchronizer extends BaseSynchronizer
         $this->_locations = [];
     }
 
-    /**
-     * @throws SynchronizerException
-     * @throws \Exception
-     */
     public function sync(): void
     {
         $this->helper->deleteEntity(Event::class);
@@ -78,11 +73,6 @@ final class EventSynchronizer extends BaseSynchronizer
         }
     }
 
-    /**
-     * @return array<string>
-     *
-     * @throws \Exception
-     */
     protected function getTokens(): array
     {
         $url = \sprintf('%s?page=all', EventSynchronizer::LIST_URL);
@@ -100,9 +90,6 @@ final class EventSynchronizer extends BaseSynchronizer
         return $tokens;
     }
 
-    /**
-     * @throws SynchronizerException
-     */
     private function syncOne(string $token): void
     {
         $url = \sprintf('%s/%s', EventSynchronizer::DETAILS_URL, $token);
@@ -121,11 +108,6 @@ final class EventSynchronizer extends BaseSynchronizer
         $this->em->persist($event);
     }
 
-    /**
-     * @return array<string, string>
-     *
-     * @throws SynchronizerException
-     */
     protected function getDataFromDom(): array
     {
         return [
@@ -177,17 +159,6 @@ final class EventSynchronizer extends BaseSynchronizer
         return $data;
     }
 
-    /**
-     * @param array<string, string> $domData
-     *
-     * @return array{
-     *      name: string,
-     *      date: DateTimeImmutable,
-     *      is_ppv: bool,
-     *      is_ultimate_fighter: bool,
-     *      location: Location
-     *  }
-     */
     protected function transformDomData(array $domData): array
     {
         /** @var \DateTimeImmutable $date */

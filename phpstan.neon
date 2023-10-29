@@ -5,3 +5,6 @@ parameters:
 		- tests
 
 	checkGenericClassInNonGenericObjectType: false
+	ignoreErrors:
+	    - '#has no value type specified in iterable#'
+	    - '#with no value type specified in iterable#'

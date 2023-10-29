@@ -85,11 +85,6 @@ final class FightSynchronizer extends BaseSynchronizer
         $this->logger->info(\sprintf('Fights of "%s" are import', $event->getName()));
     }
 
-    /**
-     * @return array<string>
-     *
-     * @throws \Exception
-     */
     protected function getTokens(Event $event): array
     {
         $url = \sprintf('%s/%s', EventSynchronizer::DETAILS_URL, $event->getToken());
@@ -199,17 +194,19 @@ final class FightSynchronizer extends BaseSynchronizer
 
     private function transformFighter(array $data, Corner $corner): FighterFight
     {
-        $fullName = $data['fighter'];
+        $fullName = (string) $data['fighter'];
 
         $fighter = $this->_fighters[$fullName] ?? null;
         if (null === $fighter) {
+            /** @var Fighter|null $fighter */
             $fighter = $this->em->getRepository(Fighter::class)->findOneBy(['fullName' => $fullName]);
-            $this->_fighters[$fullName] = $fighter;
         }
 
         if (null === $fighter) {
             throw new SynchronizerException(\sprintf('Fighter "%s" not found', $data['fighter']));
         }
+
+        $this->_fighters[$fullName] = $fighter;
 
         $f = new FighterFight();
         $f->setFighter($fighter);
